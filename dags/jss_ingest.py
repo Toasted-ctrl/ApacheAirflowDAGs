@@ -70,13 +70,13 @@ def process_job(job: dict) -> None:
             f"No dataset URL found in response for job {job.get('id')}"
         )
 
-    # Poll the run status until it's FINISHED
+    # Poll the run status until it's SUCCEEDED
     # Apify API endpoint: GET /v2/actor-runs/{RUN_ID}
     api_key = job.get("api_key")
     run_check_url = f"https://api.apify.com/v2/actor-runs/{run_id}"
 
-    max_attempts = 60
-    poll_interval = 10  # seconds
+    max_attempts = 12
+    poll_interval = 30  # seconds
 
     for attempt in range(max_attempts):
         run_response = requests.get(run_check_url, params={"token": api_key})
@@ -88,18 +88,32 @@ def process_job(job: dict) -> None:
         run_status = run_response.json().get("data", {}).get("status")
         log.info(f"Run status (attempt {attempt + 1}/{max_attempts}): {run_status}")
 
-        if run_status == "FINISHED":
+        if run_status == "SUCCEEDED":
             break
-        elif run_status == "FAILED":
-            raise AirflowSkipException(f"Run failed for job {job.get('id')}")
-        elif run_status == "ABORTED":
-            raise AirflowSkipException(f"Run aborted for job {job.get('id')}")
+        elif run_status in ("FAILED", "ABORTED", "TIMED-OUT", "TIMING-OUT", "ABORTING"):
+            raise AirflowSkipException(
+                f"Run {run_status.lower()} for job {job.get('id')}"
+            )
+        elif run_status not in (
+            "SUCCEEDED",
+            "FAILED",
+            "ABORTED",
+            "TIMED-OUT",
+            "TIMING-OUT",
+            "ABORTING",
+            "RUNNING",
+            "READY",
+            "CREATING",
+        ):
+            raise AirflowSkipException(
+                f"Unexpected run status '{run_status}' for job {job.get('id')}"
+            )
 
         if attempt < max_attempts - 1:
             time.sleep(poll_interval)
     else:
         raise AirflowSkipException(
-            f"Run did not finish within {max_attempts * poll_interval} seconds for job {job.get('id')}"
+            f"Run did not succeed within {max_attempts * poll_interval} seconds for job {job.get('id')}"
         )
 
     data_response = requests.get(dataset_url, params={"token": api_key})
