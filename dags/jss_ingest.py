@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from datetime import datetime
 from logging import getLogger
 
@@ -19,16 +18,8 @@ def ensure_schemas():
         ensure_table_exists(engine_url=engine_url, schema=schema)
 
 
-@dataclass(frozen=True)
-class Job:
-    id: str  # UUID not JSON-serializable
-    filters: dict
-    api_key: str
-    url: str
-
-
 @task.python
-def get_jobs() -> list[Job]:
+def get_jobs() -> list[dict]:
     engine_url = get_engine_url(db_database="prod_jss")
     with get_db_session(engine_url=engine_url) as session:
         jobs = session.query(IngestJobsJSS).all()
@@ -38,19 +29,19 @@ def get_jobs() -> list[Job]:
         for job in jobs:
             log.info(str(job))
             j.append(
-                Job(
-                    id=str(job.id),
-                    filters=job.filters,
-                    api_key=job.api_key,
-                    url=job.url,
-                )
+                {
+                    "id": str(job.id),
+                    "filters": job.filters,
+                    "api_key": job.api_key,
+                    "url": job.url,
+                }
             )
         return j
 
 
 @task.python
-def process_job(job: Job) -> None:
-    log.info(f"Processing job {job.id} from {job.url}")
+def process_job(job: dict) -> None:
+    log.info(f"Processing job {job.get('id')} from {job.get('url')}")
 
 
 with DAG(
