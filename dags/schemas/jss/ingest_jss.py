@@ -20,6 +20,8 @@ class IngestJobsJSS(Base):
 
     api_key: Mapped[str] = mapped_column(String(255), nullable=False)
 
+    url: Mapped[str] = mapped_column(String(255), nullable=False)
+
     inserted_date: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
