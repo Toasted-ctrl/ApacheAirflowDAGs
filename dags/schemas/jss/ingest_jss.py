@@ -38,9 +38,7 @@ class IngestDataJSS(Base):
         UUID, primary_key=True, server_default=text("gen_random_uuid()")
     )
 
-    job_id: Mapped[uuid.UUID] = mapped_column(
-        UUID, primary_key=True, server_default=text("gen_random_uuid()")
-    )
+    job_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
 
     data: Mapped[dict] = mapped_column(JSON, nullable=False)
 

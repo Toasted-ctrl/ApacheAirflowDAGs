@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from logging import getLogger
 
@@ -44,12 +45,39 @@ def get_jobs() -> list[dict]:
 def process_job(job: dict) -> None:
     log.info(f"Processing job {job['id']} from {job['url']}")
     params = {"token": job.get("api_key")}
-    response = requests.post(url=job['url'], params=params, json=job['filters'])
+    response = requests.post(url=job["url"], params=params, json=job["filters"])
     if not response.ok:
         raise AirflowSkipException(
             f"API call failed for job {job.get('id')}: HTTP {response.status_code}"
         )
-    log.info(response.json())
+
+    response_data = response.json()
+    log.info(f"API response: {response_data}")
+
+    dataset_url = response_data.get("data", {}).get("output", {}).get("jobs")
+    if not dataset_url:
+        raise AirflowSkipException(
+            f"No dataset URL found in response for job {job.get('id')}"
+        )
+
+    data_response = requests.get(dataset_url)
+    if not data_response.ok:
+        raise AirflowSkipException(
+            f"Failed to fetch dataset for job {job.get('id')}: HTTP {data_response.status_code}"
+        )
+
+    dataset_items = data_response.json()
+    log.info(f"Fetched {len(dataset_items)} items from dataset")
+
+    engine_url = get_engine_url(db_database="prod_jss")
+    with get_db_session(engine_url=engine_url) as session:
+        for item in dataset_items:
+            new_record = IngestDataJSS(
+                job_id=uuid.UUID(job["id"]), data=item, inserted_by="airflow"
+            )
+            session.add(new_record)
+        session.commit()
+        log.info(f"Inserted {len(dataset_items)} records for job {job['id']}")
 
 
 with DAG(
