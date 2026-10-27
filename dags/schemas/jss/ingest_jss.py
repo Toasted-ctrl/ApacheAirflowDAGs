@@ -8,7 +8,7 @@ from schemas.base import Base
 
 
 class IngestJobsJSS(Base):
-    __tablename__ = "ingest_filters_jss"
+    __tablename__ = "ingest_jobs"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID, primary_key=True, server_default=text("gen_random_uuid()")
@@ -30,7 +30,7 @@ class IngestJobsJSS(Base):
 
 
 class IngestDataJSS(Base):
-    __tablename__ = "ingest_jss"
+    __tablename__ = "ingest_data"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID, primary_key=True, server_default=text("gen_random_uuid()")
