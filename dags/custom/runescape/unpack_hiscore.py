@@ -11,11 +11,7 @@ class HiscoreItem:
     rank: int
 
 
-def unpack_hiscore_item(
-    is_skill: bool,
-    listing: list,
-    name: str
-) -> HiscoreItem:
+def unpack_hiscore_item(is_skill: bool, listing: list, name: str) -> HiscoreItem:
     """Returns a HiscoreItem object for the provided listing."""
 
     return HiscoreItem(
@@ -24,7 +20,7 @@ def unpack_hiscore_item(
         progression="Experience" if is_skill else "Points",
         progression_points=listing[2] if is_skill else listing[1],
         level=listing[1] if is_skill else None,
-        rank=listing[0]
+        rank=listing[0],
     )
 
 
@@ -64,7 +60,7 @@ def unpack_hiscore_entry(input: str) -> list[HiscoreItem]:
         "Archaeology",
         "Necromancy",
         "Bounty Hunter",
-        "B.H. Rogues", 
+        "B.H. Rogues",
         "Dominion Tower",
         "The Crucible",
         "Castle Wars games",
@@ -93,18 +89,18 @@ def unpack_hiscore_entry(input: str) -> list[HiscoreItem]:
         "Clue Scrolls Hard",
         "Clue Scrolls Elite",
         "Clue Scrolls Master",
-        "League Points"
+        "League Points",
     ]
 
     m = []
-    listings = input.split('\n')
+    listings = input.split("\n")
     for idx, line in enumerate(listings):
-        listing = line.split(',')
+        listing = line.split(",")
         if idx < 61:
-            m.append(unpack_hiscore_item(
-                is_skill=idx < 30,
-                listing=listing,
-                name=hiscore_items[idx]
-            ))
+            m.append(
+                unpack_hiscore_item(
+                    is_skill=idx < 30, listing=listing, name=hiscore_items[idx]
+                )
+            )
 
     return m

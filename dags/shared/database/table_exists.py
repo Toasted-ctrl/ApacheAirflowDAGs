@@ -1,9 +1,8 @@
 from logging import getLogger
-from sqlalchemy import inspect
-from sqlalchemy import create_engine
+from typing import cast
 
 from schemas.base import Base
-
+from sqlalchemy import Table, create_engine, inspect
 
 log = getLogger(__name__)
 
@@ -19,7 +18,9 @@ def ensure_table_exists(engine_url: str, schema: type[Base]) -> None:
     try:
         inspector = inspect(engine)
         if not inspector.has_table(table_name=table_name):
-            Base.metadata.create_all(bind=engine, tables=[schema.__table__])
+            Base.metadata.create_all(
+                bind=engine, tables=[cast(Table, schema.__table__)]
+            )
             log.info(f"Table '{table_name}' did not exist, created ...")
         else:
             log.info(f"Table '{table_name}' already exists, skipping creation ...")

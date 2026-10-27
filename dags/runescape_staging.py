@@ -1,19 +1,16 @@
-from airflow import DAG
-from airflow.sdk import task
 from dataclasses import asdict
 from datetime import datetime
 from logging import getLogger
 
+from airflow import DAG
+from airflow.sdk import task
 from custom.runescape.unpack_hiscore import unpack_hiscore_entry
-
 from schemas.runescape.ingest_hiscore import IngestHiscoresT
 from schemas.runescape.staging_hiscore import StagingHiscoresT
-
 from shared.database.engine import get_engine_url
 from shared.database.extremes import get_max_value_from_schema_by_column
 from shared.database.session import get_db_session
 from shared.database.table_exists import ensure_table_exists
-
 
 log = getLogger(__name__)
 
@@ -21,10 +18,7 @@ log = getLogger(__name__)
 @task.python
 def ensure_schemas() -> None:
     engine_url = get_engine_url(db_database="prod_runescape")
-    for schema in [
-        IngestHiscoresT,
-        StagingHiscoresT
-    ]:
+    for schema in [IngestHiscoresT, StagingHiscoresT]:
         ensure_table_exists(engine_url=engine_url, schema=schema)
 
 
@@ -33,9 +27,8 @@ def get_and_transform_unprocessed_hiscore_records() -> None:
     engine_url = get_engine_url(db_database="prod_runescape")
     with get_db_session(engine_url=engine_url) as session:
         max_ingested_date = get_max_value_from_schema_by_column(
-            session=session,
-            schema=StagingHiscoresT,
-            column_name='ingested_date')
+            session=session, schema=StagingHiscoresT, column_name="ingested_date"
+        )
 
         if not max_ingested_date:
             log.info(
@@ -57,7 +50,8 @@ def get_and_transform_unprocessed_hiscore_records() -> None:
                 session.query(IngestHiscoresT)
                 .filter(
                     IngestHiscoresT.inserted_date > max_ingested_date,
-                    IngestHiscoresT.status_code == 200)
+                    IngestHiscoresT.status_code == 200,
+                )
                 .all()
             )
 
@@ -70,9 +64,7 @@ def get_and_transform_unprocessed_hiscore_records() -> None:
             m = unpack_hiscore_entry(r.data)
             for item in m:
                 ni = StagingHiscoresT(
-                    user_id=r.user_id,
-                    ingested_date=r.inserted_date,
-                    **asdict(item)
+                    user_id=r.user_id, ingested_date=r.inserted_date, **asdict(item)
                 )
 
                 session.add(ni)
@@ -91,11 +83,8 @@ with DAG(
     dag_display_name="Runescape: Staging",
     start_date=datetime(2026, 8, 15),
     catchup=False,
-    schedule="30 4 * * *"
+    schedule="30 4 * * *",
 ) as runescape_staging:
-
     schemas = ensure_schemas()
 
-    schemas >> [
-        get_and_transform_unprocessed_hiscore_records()
-    ]
+    schemas >> [get_and_transform_unprocessed_hiscore_records()]

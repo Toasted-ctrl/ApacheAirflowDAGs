@@ -1,19 +1,19 @@
-from airflow.exceptions import AirflowConfigException
-from logging import getLogger
 import os
+from logging import getLogger
 
+from airflow.exceptions import AirflowConfigException
 
 log = getLogger(__name__)
 
 
 def get_engine_url(
     db_database: str,
-    db_username: str = os.getenv("MY_DB_USER"),
-    db_password: str = os.getenv("MY_DB_PASSWORD"),
-    db_hostname: str = os.getenv("MY_DB_HOST"),
-    db_dialect: str = os.getenv("MY_DB_DIALECT"),
-    db_driver: str = os.getenv("MY_DB_DRIVER"),
-    db_port: str = os.getenv("MY_DB_PORT")
+    db_username: str | None = os.getenv("MY_DB_USER"),
+    db_password: str | None = os.getenv("MY_DB_PASSWORD"),
+    db_hostname: str | None = os.getenv("MY_DB_HOST"),
+    db_dialect: str | None = os.getenv("MY_DB_DIALECT"),
+    db_driver: str | None = os.getenv("MY_DB_DRIVER"),
+    db_port: str | None = os.getenv("MY_DB_PORT"),
 ) -> str:
     """Builds a database engine URL."""
 
