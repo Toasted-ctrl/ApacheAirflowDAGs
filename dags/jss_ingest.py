@@ -45,7 +45,7 @@ def process_job(job: dict) -> None:
     log.info(f"Processing job {job['id']} from {job['url']}")
     params = {"token": job.get("api_key")}
     response = requests.post(url=job['url'], params=params, json=job['filters'])
-    if not response.status_code == 200:
+    if not response.ok:
         raise AirflowSkipException(
             f"API call failed for job {job.get('id')}: HTTP {response.status_code}"
         )
