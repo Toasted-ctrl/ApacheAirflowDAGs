@@ -3,9 +3,9 @@ name = "afs"
 version = "0.1.0"
 description = "A collection of Apache AirFlow DAGs and shared resources."
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.10"
 dependencies = [
-    "apache-airflow>=3.3.1",
+    "apache-airflow>=3.2.2",
 ]
 
 [dependency-groups]

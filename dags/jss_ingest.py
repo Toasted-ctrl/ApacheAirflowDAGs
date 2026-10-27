@@ -1,7 +1,7 @@
 from datetime import datetime
 from logging import getLogger
 
-from airflow.sdk import task, DAG
+from airflow.sdk import DAG, task
 from schemas.jss.ingest_jss import IngestDataJSS, IngestJobsJSS
 from shared.database.engine import get_engine_url
 from shared.database.table_exists import ensure_table_exists
@@ -25,6 +25,4 @@ with DAG(
 ) as jss_ingest:
     schemas = ensure_schemas()
 
-    (
-        schemas
-    )
+    (schemas)
