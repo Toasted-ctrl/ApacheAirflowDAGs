@@ -73,6 +73,11 @@ class TestJSSIngestDAG:
         task_ids = [task.task_id for task in jss_ingest_dag.tasks]
         assert "ensure_schemas" in task_ids
 
+    def test_has_get_jobs_task(self, jss_ingest_dag):
+        """Test that the DAG has the get_jobs task."""
+        task_ids = [task.task_id for task in jss_ingest_dag.tasks]
+        assert "get_jobs" in task_ids
+
     def test_number_of_tasks(self, jss_ingest_dag):
-        """Test that the DAG has exactly one task."""
-        assert len(list(jss_ingest_dag.tasks)) == 1
+        """Test that the DAG has exactly two tasks."""
+        assert len(list(jss_ingest_dag.tasks)) == 2
