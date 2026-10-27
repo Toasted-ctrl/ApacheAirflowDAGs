@@ -1,6 +1,7 @@
 from datetime import datetime
 from logging import getLogger
 
+import requests
 from airflow.sdk import DAG, task
 from airflow.sdk.exceptions import AirflowSkipException
 from schemas.jss.ingest_jss import IngestDataJSS, IngestJobsJSS
@@ -41,7 +42,14 @@ def get_jobs() -> list[dict]:
 
 @task.python
 def process_job(job: dict) -> None:
-    log.info(f"Processing job {job.get('id')} from {job.get('url')}")
+    log.info(f"Processing job {job['id']} from {job['url']}")
+    params = {"token": job.get("api_key")}
+    response = requests.post(url=job['url'], params=params, data=job['filters'])
+    if not response.status_code == 200:
+        raise AirflowSkipException(
+            f"API call failed for job {job.get('id')}: HTTP {response.status_code}"
+        )
+    log.info(response.json())
 
 
 with DAG(
