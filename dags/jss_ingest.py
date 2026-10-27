@@ -1,3 +1,4 @@
+import time
 import uuid
 from datetime import datetime
 from logging import getLogger
@@ -54,13 +55,54 @@ def process_job(job: dict) -> None:
     response_data = response.json()
     log.info(f"API response: {response_data}")
 
+    # Extract run ID and dataset info
+    # Use 'id' field (run ID) from response data, not 'actId'
+    run_id = response_data.get("data", {}).get("id")
     dataset_url = response_data.get("data", {}).get("output", {}).get("jobs")
+
+    if not run_id:
+        raise AirflowSkipException(
+            f"No run ID found in response for job {job.get('id')}"
+        )
+
     if not dataset_url:
         raise AirflowSkipException(
             f"No dataset URL found in response for job {job.get('id')}"
         )
 
-    data_response = requests.get(dataset_url)
+    # Poll the run status until it's FINISHED
+    # Apify API endpoint: GET /v2/actor-runs/{RUN_ID}
+    api_key = job.get("api_key")
+    run_check_url = f"https://api.apify.com/v2/actor-runs/{run_id}"
+
+    max_attempts = 60
+    poll_interval = 10  # seconds
+
+    for attempt in range(max_attempts):
+        run_response = requests.get(run_check_url, params={"token": api_key})
+        if not run_response.ok:
+            raise AirflowSkipException(
+                f"Failed to check run status for job {job.get('id')}: HTTP {run_response.status_code}"
+            )
+
+        run_status = run_response.json().get("data", {}).get("status")
+        log.info(f"Run status (attempt {attempt + 1}/{max_attempts}): {run_status}")
+
+        if run_status == "FINISHED":
+            break
+        elif run_status == "FAILED":
+            raise AirflowSkipException(f"Run failed for job {job.get('id')}")
+        elif run_status == "ABORTED":
+            raise AirflowSkipException(f"Run aborted for job {job.get('id')}")
+
+        if attempt < max_attempts - 1:
+            time.sleep(poll_interval)
+    else:
+        raise AirflowSkipException(
+            f"Run did not finish within {max_attempts * poll_interval} seconds for job {job.get('id')}"
+        )
+
+    data_response = requests.get(dataset_url, params={"token": api_key})
     if not data_response.ok:
         raise AirflowSkipException(
             f"Failed to fetch dataset for job {job.get('id')}: HTTP {data_response.status_code}"
