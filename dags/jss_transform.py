@@ -21,4 +21,4 @@ with DAG(
     start_date=datetime(2026, 11, 13),
     catchup=False,
 ) as jss_staging:
-    resources = get_resources()
+    resources = get_inference_resources()
