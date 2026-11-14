@@ -62,7 +62,7 @@ def process_jobs() -> int:
 with DAG(
     dag_id="jss.stage",
     dag_display_name="JSS: Stage",
-    schedule="0 30 * * 4",
+    schedule="30 15 * * 4",
     start_date=datetime(2026, 11, 13),
     catchup=False,
 ) as jss_staging:
