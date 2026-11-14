@@ -14,3 +14,6 @@ uv.lock
 
 # k8s files
 airflow-values.yaml
+
+# jss
+jss_data_example.txt
