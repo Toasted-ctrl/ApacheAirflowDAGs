@@ -22,16 +22,6 @@ class StageDataJSS(Base):
 
     j_description: Mapped[str] = mapped_column(Text, nullable=False)
 
-    j_location: Mapped[str] = mapped_column(String(255), nullable=False)
-
-    j_url: Mapped[str] = mapped_column(String(255), nullable=False)
-
-    j_ctype: Mapped[str] = mapped_column(String(40), nullable=False)
-
-    j_ptime: Mapped[str] = mapped_column(String(25), nullable=False)
-
-    j_title: Mapped[str] = mapped_column(String(40), nullable=False)
-
     inserted_date: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
