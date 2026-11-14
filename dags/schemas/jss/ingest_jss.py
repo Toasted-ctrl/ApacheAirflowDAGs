@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, TIMESTAMP, UUID, String, text
+from sqlalchemy import JSON, TIMESTAMP, UUID, String, text, TEXT
 from sqlalchemy.orm import Mapped, mapped_column
 
 from schemas.base import Base
@@ -21,6 +21,8 @@ class IngestJobsJSS(Base):
     api_key: Mapped[str] = mapped_column(String(255), nullable=False)
 
     url: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    requirements: Mapped[str] = mapped_column(TEXT, nullable=False)
 
     inserted_date: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
