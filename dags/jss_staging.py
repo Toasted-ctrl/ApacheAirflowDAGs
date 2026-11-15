@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from logging import getLogger
 
 from airflow.sdk import DAG, task
@@ -25,7 +25,10 @@ def process_jobs() -> int:
     with get_db_session(engine_url=engine_url) as session:
         items = (
             session.query(IngestDataJSS)
-            .where(IngestDataJSS.inserted_date > (datetime.now() - timedelta(days=9)))
+            .where(
+                IngestDataJSS.inserted_date
+                > (datetime.now(timezone.utc) - timedelta(days=9))
+            )
             .all()
         )
         if not items:

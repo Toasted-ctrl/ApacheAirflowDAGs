@@ -1,6 +1,6 @@
 import random
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from logging import getLogger
 
 import requests
@@ -34,7 +34,10 @@ def process_jobs() -> None:
     with get_db_session(engine_url=engine_url) as session:
         items = (
             session.query(StageDataJSS)
-            .where(StageDataJSS.inserted_date > (datetime.now() - timedelta(days=9)))
+            .where(
+                StageDataJSS.inserted_date
+                > (datetime.now(timezone.utc) - timedelta(days=9))
+            )
             .all()
         )
         if not items:
