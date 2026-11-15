@@ -8,7 +8,7 @@ from schemas.base import Base
 
 
 class TransformDataJSS(Base):
-    __tablename__ = "stage_data"
+    __tablename__ = "transform_data"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID, primary_key=True, server_default=text("gen_random_uuid()")
