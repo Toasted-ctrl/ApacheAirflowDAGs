@@ -24,9 +24,7 @@ class TransformDataJSS(Base):
 
     j_score: Mapped[float] = mapped_column(Float, nullable=False)
 
-    processed_by_user: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False
-    )
+    processed_by_user: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
     inserted_date: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")

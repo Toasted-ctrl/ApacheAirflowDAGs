@@ -104,6 +104,7 @@ def process_jobs() -> None:
                         job_id=item.job_id,
                         j_data=item.j_data,
                         j_score=rating,
+                        processed_by_user=False,
                     )
                 )
                 log.info(f"Rating threshold ({RATING_THRESHOLD}) met, adding ...")
