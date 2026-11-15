@@ -122,9 +122,10 @@ def process_jobs() -> None:
 with DAG(
     dag_id="jss.transform",
     dag_display_name="JSS: Transform",
-    schedule="* 16 * * 0",
+    schedule="0 16 * * 0",
     start_date=datetime(2026, 11, 13),
     catchup=False,
+    max_active_runs=1,
 ) as jss_transform:
     requirements = ensure_requirements()
     jobs = process_jobs()
