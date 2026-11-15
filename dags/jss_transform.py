@@ -41,7 +41,7 @@ def process_jobs() -> None:
                 IngestJobsJSS.id == item.job_id
             )
             actual_description = item.j_description
-            params = {
+            json = {
                 "agent_id": inference.get("INFERENCE_JSS_AGENT_ID"),
                 "state": {
                     "user_requirements": user_requirements,
@@ -51,8 +51,8 @@ def process_jobs() -> None:
             headers: dict = {"X-API-Key": inference.get("INFERENCE_API_KEY")}
             response = requests.post(
                 url=f"{inference.get('INFERENCE_API_URL')}{inference.get('INFERENCE_ENDPOINT_DECISION')}",
-                params=params,
                 headers=headers,
+                json=json
             )
             log.info(f"Response code {response.status_code}")
             log.info(response.json())
