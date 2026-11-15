@@ -20,7 +20,7 @@ def ensure_schemas():
 
 
 @task.python
-def process_jobs() -> int:
+def process_jobs() -> None:
     engine_url = get_engine_url(db_database="prod_jss")
     with get_db_session(engine_url=engine_url) as session:
         items = (
@@ -55,7 +55,7 @@ def process_jobs() -> int:
         session.add_all(staged)
         session.commit()
         log.info(f"Added {count} items to staging.")
-        return count
+        return
 
 
 with DAG(
