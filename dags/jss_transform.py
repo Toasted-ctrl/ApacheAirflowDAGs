@@ -37,11 +37,13 @@ def process_jobs() -> None:
         transform = []
         count = 0
         for item in items:
-            user_requirements = session.query(IngestJobsJSS.requirements).where(
-                IngestJobsJSS.id == item.job_id
+            user_requirements = (
+                session.query(IngestJobsJSS.requirements)
+                .where(IngestJobsJSS.id == item.job_id)
+                .scalar()
             )
             actual_description = item.j_description
-            json = {
+            payload = {
                 "agent_id": inference.get("INFERENCE_JSS_AGENT_ID"),
                 "state": {
                     "user_requirements": user_requirements,
@@ -52,7 +54,7 @@ def process_jobs() -> None:
             response = requests.post(
                 url=f"{inference.get('INFERENCE_API_URL')}{inference.get('INFERENCE_ENDPOINT_DECISION')}",
                 headers=headers,
-                json=json
+                json=payload
             )
             log.info(f"Response code {response.status_code}")
             log.info(response.json())
