@@ -39,9 +39,11 @@ def process_jobs() -> None:
         total = len(items)
         inference = get_resources()
         transform = []
+        current_job = 0
         count = 0
         failed_melious_calls = 0
         for item in items:
+            current_job += 1
             if failed_melious_calls > 5:
                 raise AirflowFailException("Exceeded max Melious failures.")
             time.sleep(random.uniform(5, 10))
@@ -66,17 +68,25 @@ def process_jobs() -> None:
                     json=payload,
                     timeout=30,
                 )
-                log.info(f"Stage ID: {item.id}. Response code {response.status_code}")
+                log.info(
+                    f"Job {current_job}/{total}, Stage ID: {item.id}. Response code {response.status_code}."
+                )
             except requests_exceptions.Timeout:
-                log.exception(f"Stage ID: {item.id}. Request timed out")
+                log.exception(
+                    f"Job {current_job}/{total}, Stage ID: {item.id}. Request timed out"
+                )
                 failed_melious_calls += 1
                 continue
             except requests_exceptions.ConnectionError:
-                log.exception(f"Stage ID: {item.id}. Connection error")
+                log.exception(
+                    f"Job {current_job}/{total}, Stage ID: {item.id}. Connection error"
+                )
                 failed_melious_calls += 1
                 continue
             except requests_exceptions.RequestException:
-                log.exception(f"Stage ID: {item.id}. Request failed")
+                log.exception(
+                    f"Job {current_job}/{total}, Stage ID: {item.id}. Request failed"
+                )
                 failed_melious_calls += 1
                 continue
             if response.status_code != 200:
@@ -87,6 +97,7 @@ def process_jobs() -> None:
                 TransformDataJSS(
                     ingest_id=item.ingest_id,
                     stage_id=item.id,
+                    job_id=item.job_id,
                     j_data=item.j_data,
                     is_match_b=rating >= 0.5,
                     is_match_f=rating,
@@ -94,9 +105,10 @@ def process_jobs() -> None:
             )
             count += 1
         session.add_all(transform)
+        session.commit()
         log.info(f"Completed {count}/{total} jobs.")
         log.info(f"Failed {failed_melious_calls} Melious API calls.")
-        return
+        return None
 
 
 with DAG(

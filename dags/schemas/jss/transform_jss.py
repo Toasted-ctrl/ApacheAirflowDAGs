@@ -14,6 +14,8 @@ class TransformDataJSS(Base):
         UUID, primary_key=True, server_default=text("gen_random_uuid()")
     )
 
+    job_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+
     ingest_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
 
     stage_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
