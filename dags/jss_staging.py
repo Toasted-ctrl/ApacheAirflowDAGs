@@ -45,6 +45,7 @@ def process_jobs() -> int:
                     job_id=item.job_id,
                     j_id=item.data.get("id"),
                     j_description=item.data.get("description"),
+                    j_data=item.data,
                 )
             )
             count += 1

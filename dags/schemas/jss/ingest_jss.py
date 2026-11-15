@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, TIMESTAMP, UUID, String, text, TEXT
+from sqlalchemy import JSON, TEXT, TIMESTAMP, UUID, String, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from schemas.base import Base
