@@ -1,9 +1,12 @@
+import random
+import time
 from datetime import datetime, timedelta
 from logging import getLogger
 
 import requests
 from airflow.sdk import DAG, task
-from airflow.sdk.exceptions import AirflowSkipException
+from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
+from requests import exceptions as requests_exceptions
 from schemas.jss.ingest_jss import IngestJobsJSS
 from schemas.jss.stage_jss import StageDataJSS
 from schemas.jss.transform_jss import TransformDataJSS
@@ -33,10 +36,15 @@ def process_jobs() -> None:
         )
         if not items:
             raise AirflowSkipException("No new jobs to process.")
+        total = len(items)
         inference = get_resources()
         transform = []
         count = 0
+        failed_melious_calls = 0
         for item in items:
+            if failed_melious_calls > 5:
+                raise AirflowFailException("Exceeded max Melious failures.")
+            time.sleep(random.uniform(5, 10))
             user_requirements = (
                 session.query(IngestJobsJSS.requirements)
                 .where(IngestJobsJSS.id == item.job_id)
@@ -51,14 +59,44 @@ def process_jobs() -> None:
                 },
             }
             headers: dict = {"X-API-Key": inference.get("INFERENCE_API_KEY")}
-            response = requests.post(
-                url=f"{inference.get('INFERENCE_API_URL')}{inference.get('INFERENCE_ENDPOINT_DECISION')}",
-                headers=headers,
-                json=payload
+            try:
+                response = requests.post(
+                    url=f"{inference.get('INFERENCE_API_URL')}{inference.get('INFERENCE_ENDPOINT_DECISION')}",
+                    headers=headers,
+                    json=payload,
+                    timeout=30,
+                )
+                log.info(f"Stage ID: {item.id}. Response code {response.status_code}")
+            except requests_exceptions.Timeout:
+                log.exception(f"Stage ID: {item.id}. Request timed out")
+                failed_melious_calls += 1
+                continue
+            except requests_exceptions.ConnectionError:
+                log.exception(f"Stage ID: {item.id}. Connection error")
+                failed_melious_calls += 1
+                continue
+            except requests_exceptions.RequestException:
+                log.exception(f"Stage ID: {item.id}. Request failed")
+                failed_melious_calls += 1
+                continue
+            if response.status_code != 200:
+                failed_melious_calls += 1
+                continue
+            rating: float = response.json()["answers"]["is_match"]["noul"]
+            transform.append(
+                TransformDataJSS(
+                    ingest_id=item.ingest_id,
+                    stage_id=item.id,
+                    j_data=item.j_data,
+                    is_match_b=rating >= 0.5,
+                    is_match_f=rating,
+                )
             )
-            log.info(f"Response code {response.status_code}")
-            log.info(response.json())
             count += 1
+        session.add_all(transform)
+        log.info(f"Completed {count}/{total} jobs.")
+        log.info(f"Failed {failed_melious_calls} Melious API calls.")
+        return
 
 
 with DAG(
