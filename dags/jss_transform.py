@@ -25,6 +25,9 @@ def ensure_requirements() -> None:
         ensure_table_exists(engine_url=engine_url, schema=schema)
 
 
+RATING_THRESHOLD = 0.80
+
+
 @task.python
 def process_jobs() -> None:
     engine_url = get_engine_url(db_database="prod_jss")
@@ -40,7 +43,7 @@ def process_jobs() -> None:
         inference = get_resources()
         transform = []
         current_job = 0
-        count = 0
+        completed = 0
         failed_melious_calls = 0
         for item in items:
             current_job += 1
@@ -93,28 +96,29 @@ def process_jobs() -> None:
                 failed_melious_calls += 1
                 continue
             rating: float = response.json()["answers"]["is_match"]["noul"]
-            transform.append(
-                TransformDataJSS(
-                    ingest_id=item.ingest_id,
-                    stage_id=item.id,
-                    job_id=item.job_id,
-                    j_data=item.j_data,
-                    is_match_b=rating >= 0.5,
-                    is_match_f=rating,
+            if rating >= RATING_THRESHOLD:
+                transform.append(
+                    TransformDataJSS(
+                        ingest_id=item.ingest_id,
+                        stage_id=item.id,
+                        job_id=item.job_id,
+                        j_data=item.j_data,
+                        j_score=rating,
+                    )
                 )
-            )
-            count += 1
+                log.info(f"Rating threshold ({RATING_THRESHOLD}) met, adding ...")
+            completed += 1
         session.add_all(transform)
         session.commit()
-        log.info(f"Completed {count}/{total} jobs.")
+        log.info(f"Completed {completed}/{total} jobs.")
         log.info(f"Failed {failed_melious_calls} Melious API calls.")
-        return None
+        return
 
 
 with DAG(
     dag_id="jss.transform",
     dag_display_name="JSS: Transform",
-    schedule="* 16 * * 4",
+    schedule="* 16 * * 0",
     start_date=datetime(2026, 11, 13),
     catchup=False,
 ) as jss_transform:

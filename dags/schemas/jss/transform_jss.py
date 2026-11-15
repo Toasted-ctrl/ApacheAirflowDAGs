@@ -22,9 +22,11 @@ class TransformDataJSS(Base):
 
     j_data: Mapped[dict] = mapped_column(JSON, nullable=False)
 
-    is_match_b: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    j_score: Mapped[float] = mapped_column(Float, nullable=False)
 
-    is_match_f: Mapped[float] = mapped_column(Float, nullable=False)
+    processed_by_user: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
 
     inserted_date: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")

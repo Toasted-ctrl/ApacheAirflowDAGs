@@ -139,7 +139,7 @@ def process_job(job: dict) -> None:
 with DAG(
     dag_id="jss.ingest",
     dag_display_name="JSS: Ingest",
-    schedule="0 15 * * 4",
+    schedule="0 15 * * 0",
     start_date=datetime(2026, 10, 25),
     catchup=False,
 ) as jss_ingest:
