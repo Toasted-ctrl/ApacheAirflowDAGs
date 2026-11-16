@@ -35,3 +35,5 @@ class ReferenceDataJSS(Base):
     inserted_by: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("current_user")
     )
+
+    has_applied: Mapped[bool] = mapped_column(Boolean, nullable=True)
